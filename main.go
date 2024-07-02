@@ -109,7 +109,7 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	}()
 
 	// Append the time.
-	if !r.Time.IsZero() && h.opts.TimeFormat != "" {
+	if h.opts.TimeFormat != "" && !r.Time.IsZero() {
 		if h.opts.TimeInUTC {
 			buf = append(buf, r.Time.UTC().Format(h.opts.TimeFormat)...)
 		} else {
@@ -227,6 +227,26 @@ func (h *Handler) appendAttr(buf []byte, attr slog.Attr, prefix string) []byte {
 		} else {
 			buf = append(buf, attr.Value.Time().Format(h.opts.TimeAttributeFormat)...)
 		}
+	case slog.KindBool:
+		buf = append(buf, prefix+attr.Key...)
+		buf = append(buf, "="...)
+		buf = strconv.AppendBool(buf, attr.Value.Bool())
+	case slog.KindDuration:
+		buf = append(buf, prefix+attr.Key...)
+		buf = append(buf, "="...)
+		buf = append(buf, attr.Value.Duration().String()...)
+	case slog.KindInt64:
+		buf = append(buf, prefix+attr.Key...)
+		buf = append(buf, "="...)
+		buf = strconv.AppendInt(buf, attr.Value.Int64(), 10)
+	case slog.KindUint64:
+		buf = append(buf, prefix+attr.Key...)
+		buf = append(buf, "="...)
+		buf = strconv.AppendUint(buf, attr.Value.Uint64(), 10)
+	case slog.KindFloat64:
+		buf = append(buf, prefix+attr.Key...)
+		buf = append(buf, "="...)
+		buf = strconv.AppendFloat(buf, attr.Value.Float64(), 'f', -1, 64)
 	case slog.KindGroup:
 		attrs := attr.Value.Group()
 
