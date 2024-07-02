@@ -42,7 +42,7 @@ func main() {
 
 	logger := slog.New(slogtfmt.NewHandler(os.Stdout, opts))
 	slog.SetDefault(logger)
-	slog.Info("Started", slog.Time("time", time.Now())
+	slog.Info("Started", slog.Time("time", time.Now()))
 
 	// To create a logger with an added tag, use With(slogtfmt.Tag("tag_name")
 	serviceLogger := logger.With(slogtfmt.Tag("service"))
