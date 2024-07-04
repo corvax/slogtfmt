@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type Options struct {
@@ -57,24 +56,106 @@ type groupOrAttrs struct {
 // The tag key value will be put in square brackets before the log message.
 const tagKeyName = "__tag__"
 
+const (
+	RFC3339Milli = "2006-01-02T15:04:05.000Z07:00"
+	RFC3339Micro = "2006-01-02T15:04:05.000000Z07:00"
+)
+
 // Tag returns an slog.Attr that can be used to set the tag for a log record.
 // The tag value will be put in square brackets before the log message.
 func Tag(name string) slog.Attr {
 	return slog.Attr{Key: tagKeyName, Value: slog.StringValue(name)}
 }
 
+type Option = func(*Options)
+
+// WithLevel returns an Option that sets the log level for the Handler.
+// The provided level will be used to filter log records, only records
+// at or above the specified level will be logged.
+func WithLevel(level slog.Leveler) Option {
+	return func(opts *Options) {
+		opts.Level = level
+	}
+}
+
+// WithAddSource returns an Option that sets whether to include the source code
+// location (file and line number) in the log record.
+func WithAddSource(addSource bool) Option {
+	return func(opts *Options) {
+		opts.AddSource = addSource
+	}
+}
+
+// WithTimeFormat returns an Option that sets the time format for the log record timestamp.
+// The provided timeFormat string should be a valid time.Format layout string.
+func WithTimeFormat(timeFormat string) Option {
+	return func(opts *Options) {
+		opts.TimeFormat = timeFormat
+	}
+}
+
+// WithTimeInUTC returns an Option that sets whether to use UTC time for the log record timestamp.
+// If timeInUTC is true, the timestamp will be in UTC time, otherwise it will be in the local time zone.
+func WithTimeInUTC(timeInUTC bool) Option {
+	return func(opts *Options) {
+		opts.TimeInUTC = timeInUTC
+	}
+}
+
+// WithTimeAttributeFormat returns an Option that sets the time format for the time attribute
+// in the log record. The provided timeAttributeFormat string should be a valid time.Format layout string.
+func WithTimeAttributeFormat(timeAttributeFormat string) Option {
+	return func(opts *Options) {
+		opts.TimeAttributeFormat = timeAttributeFormat
+	}
+}
+
+// WithTimeAttributeInUTC returns an Option that sets whether to use UTC time for the time attribute
+// in the log record. If timeAttributeInUTC is true, the time attribute will be in UTC time,
+// otherwise it will be in the local time zone.
+func WithTimeAttributeInUTC(timeAttributeInUTC bool) Option {
+	return func(opts *Options) {
+		opts.TimeAttributeInUTC = timeAttributeInUTC
+	}
+}
+
+func defaultOptions() *Options {
+	return &Options{
+		Level:               slog.LevelInfo,
+		AddSource:           false,
+		TimeFormat:          RFC3339Milli,
+		TimeInUTC:           false,
+		TimeAttributeFormat: RFC3339Milli,
+		TimeAttributeInUTC:  false,
+	}
+}
+
+// NewHandlerWithOptions creates a new Handler with the provided io.Writer and a set of configurable options.
+// The options allow customizing the log level, whether to include source location, the time format, and whether to use UTC time.
+// If no options are provided, it will use the default options with the time format set to RFC3339Milli.
+func NewHandlerWithOptions(out io.Writer, opts ...Option) *Handler {
+	o := defaultOptions()
+	for _, opt := range opts {
+		opt(o)
+	}
+	return NewHandler(out, o)
+}
+
 // NewHandler creates a new Handler with the provided io.Writer and Options.
-// If no Options are provided, it will use the default Options with the time format set to time.RFC3339.
+// If no Options are provided, it will use the default Options.
+// The default Options include:
+//   - Level set to slog.LevelInfo
+//   - Time formats are set to RFC3339Milli
+//   - Time values are in local time zone
+//
+// If Level is not set in opts, it will default to slog.LevelInfo.
 func NewHandler(out io.Writer, opts *Options) *Handler {
 	h := &Handler{
 		mu:  &sync.Mutex{},
 		out: out,
 	}
 	if opts == nil {
-		opts = &Options{
-			TimeFormat:          time.RFC3339,
-			TimeAttributeFormat: time.RFC3339,
-		}
+		opts = defaultOptions()
 	}
 
 	h.opts = *opts
@@ -84,7 +165,7 @@ func NewHandler(out io.Writer, opts *Options) *Handler {
 	}
 
 	if h.opts.TimeAttributeFormat == "" {
-		h.opts.TimeAttributeFormat = time.RFC3339
+		h.opts.TimeAttributeFormat = RFC3339Milli
 	}
 
 	return h

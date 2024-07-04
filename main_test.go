@@ -49,6 +49,24 @@ func TestHandlerWithTags(t *testing.T) {
 	assert.Equal(t, expected, buf.String())
 }
 
+func TestHandlerWithOptions(t *testing.T) {
+	var buf bytes.Buffer
+	handler := NewHandlerWithOptions(&buf, WithTimeFormat(""))
+	logger := slog.New(handler)
+
+	logger.Info("test message", "key1", "value1", "key2", 42)
+
+	expected := "INFO\ttest message key1=\"value1\" key2=42\n"
+	assert.Equal(t, expected, buf.String())
+
+	buf.Reset()
+
+	logger.Warn("warning message", "error", "something went wrong")
+
+	expected = "WARN\twarning message error=\"something went wrong\"\n"
+	assert.Equal(t, expected, buf.String())
+}
+
 func BenchmarkHandler(b *testing.B) {
 	var buf bytes.Buffer
 	handler := NewHandler(&buf, &Options{
