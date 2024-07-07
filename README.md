@@ -1,6 +1,6 @@
 # slogtfmt
 
-`slogtfmt` is a handler for slog that allows you to customize timestamp format for log timestamp as well as for a time attribute. This package also has a helper function to add a tag to the log entry.
+`slogtfmt` is a handler for slog that allows you to customize timestamp formats for both log timestamps and time attributes. This package also provides a helper function to add tags to log entries.
 
 ## Features
 
@@ -64,7 +64,6 @@ The output of the sample code above would be as following:
 In order to omit the log timestamp, set `TimeFormat` to an empty string.
 
 ```go
-...
 	opts := &slogtfmt.Options{
 		Level:      slog.LevelDebug,
 		TimeFormat: "",
@@ -77,20 +76,64 @@ In order to omit the log timestamp, set `TimeFormat` to an empty string.
 	slog.Warn("Access denied", slog.String("role", "readOnly"))
  	slog.Error("Service is unavailable")
  	slog.Info("Finished")
-...
 ```
 
 #### Output:
 
-Note that the time attribute format is not affected and uses the default formatting `time.RFC3339`.
-
-
+Note that the time attribute format is not affected and uses the default formatting `slogtfmt.RFC3339Milli`.
 ```
-INFO	Started time=2024-07-01T15:02:50+10:00
+INFO	Started time=2024-07-01T15:02:50.720+10:00
 DEBUG	User connected user="username"
 WARN	Access denied role="readOnly"
 ERROR	Service is unavailable
 INFO	Finished
+```
+
+### Using `With` Option functions
+
+You can also use the `slogtfmt.NewHandlerWithOptions()` constructor with Option functions.
+
+To achieve the same log formatting as shown above, you can use the following snippet:
+
+```go
+slog.SetDefault(slog.New(slogtfmt.NewHandlerWithOptions(
+	os.Stdout,
+	slogtfmt.WithLevel(slog.LevelDebug),
+	slogtfmt.WithTimeFormat(""),
+)))
+```
+
+`With` functions are available for all `Options`.
+
+### Default options
+
+The constructor `slogtfmt.NewHandlerWithOptions()` creates the handler with the default `Options` and then updates them using the provided `With` option functions.
+
+If `nil` as `Options` is passed to `slogtfmt.NewHandler()`, the handler will be created with the default options.
+
+##### Default options
+
+```go
+defaultOptions := &Options{
+	Level:               slog.LevelInfo,
+	AddSource:           false,
+	TimeFormat:          slogtfmt.RFC3339Milli,
+	TimeInUTC:           false,
+	TimeAttributeFormat: slogtfmt.RFC3339Milli,
+	TimeAttributeInUTC:  false,
+}
+```
+
+## Time formats
+
+In addition to the standard time format, there are some additional time formats available in the package that can be used for formatting timestamps.
+
+```go
+const (
+	RFC3339Milli = "2006-01-02T15:04:05.000Z07:00"
+	RFC3339Micro = "2006-01-02T15:04:05.000000Z07:00"
+)
+
 ```
 
 ## Options
