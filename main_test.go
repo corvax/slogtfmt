@@ -27,6 +27,11 @@ func TestHandler(t *testing.T) {
 
 	expected = "WARN\twarning message error=\"something went wrong\"\n"
 	assert.Equal(t, expected, buf.String())
+
+	buf.Reset()
+	logger.Error("error message", slog.Group("attrs", slog.String("key1", "value1"), slog.Int("key2", 42)))
+	expected = "ERROR\terror message attrs.key1=\"value1\" attrs.key2=42\n"
+	assert.Equal(t, expected, buf.String())
 }
 
 func TestHandlerWithTags(t *testing.T) {
