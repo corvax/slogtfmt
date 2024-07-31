@@ -11,64 +11,56 @@ type Logger struct {
 	*slog.Logger
 }
 
-// NewLogger creates a new LoggerFormatter that wraps the provided slog.Logger.
-// The LoggerFormatter provides formatted logging methods that delegate to the underlying slog.Logger.
+// NewLogger creates a new Logger that wraps the provided slog.Logger.
+// The Logger provides formatted logging methods that delegate to the underlying slog.Logger.
 func NewLogger(logger *slog.Logger) *Logger {
 	return &Logger{logger}
 }
 
+// Logf logs a formatted message at the specified log level.
+func (l *Logger) Logf(ctx context.Context, level slog.Level, format string, args ...any) {
+	// Check if the logger is enabled to avoid unnecessary calls of fmt.Sprintf().
+	if l.Logger.Enabled(ctx, level) {
+		l.Logger.Log(ctx, level, fmt.Sprintf(format, args...))
+	}
+}
+
 // Infof logs a formatted info message.
 func (l *Logger) Infof(format string, args ...any) {
-	if l.Logger.Enabled(context.Background(), slog.LevelInfo) {
-		l.Logger.Info(fmt.Sprintf(format, args...))
-	}
+	l.Logf(context.Background(), slog.LevelInfo, format, args...)
 }
 
 // InfofContext logs a formatted info message with context.
 func (l *Logger) InfofContext(ctx context.Context, format string, args ...any) {
-	if l.Logger.Enabled(ctx, slog.LevelInfo) {
-		l.Logger.InfoContext(ctx, fmt.Sprintf(format, args...))
-	}
+	l.Logf(ctx, slog.LevelInfo, format, args...)
 }
 
 // Debugf logs a formatted debug message.
 func (l *Logger) Debugf(format string, args ...any) {
-	if l.Logger.Enabled(context.Background(), slog.LevelDebug) {
-		l.Logger.Debug(fmt.Sprintf(format, args...))
-	}
+	l.Logf(context.Background(), slog.LevelDebug, format, args...)
 }
 
 // DebugfContext logs a formatted debug message with context.
 func (l *Logger) DebugfContext(ctx context.Context, format string, args ...any) {
-	if l.Logger.Enabled(ctx, slog.LevelDebug) {
-		l.Logger.DebugContext(ctx, fmt.Sprintf(format, args...))
-	}
+	l.Logf(ctx, slog.LevelDebug, format, args...)
 }
 
 // Warnf logs a formatted warning message.
 func (l *Logger) Warnf(format string, args ...any) {
-	if l.Logger.Enabled(context.Background(), slog.LevelWarn) {
-		l.Logger.Warn(fmt.Sprintf(format, args...))
-	}
+	l.Logf(context.Background(), slog.LevelWarn, format, args...)
 }
 
 // WarnfContext logs a formatted warning message with context.
 func (l *Logger) WarnfContext(ctx context.Context, format string, args ...any) {
-	if l.Logger.Enabled(ctx, slog.LevelWarn) {
-		l.Logger.WarnContext(ctx, fmt.Sprintf(format, args...))
-	}
+	l.Logf(ctx, slog.LevelWarn, format, args...)
 }
 
 // Errorf logs a formatted error message.
 func (l *Logger) Errorf(format string, args ...any) {
-	if l.Logger.Enabled(context.Background(), slog.LevelError) {
-		l.Logger.Error(fmt.Sprintf(format, args...))
-	}
+	l.Logf(context.Background(), slog.LevelError, format, args...)
 }
 
 // ErrorfContext logs a formatted error message with context.
 func (l *Logger) ErrorfContext(ctx context.Context, format string, args ...any) {
-	if l.Logger.Enabled(ctx, slog.LevelError) {
-		l.Logger.ErrorContext(ctx, fmt.Sprintf(format, args...))
-	}
+	l.Logf(ctx, slog.LevelError, format, args...)
 }
